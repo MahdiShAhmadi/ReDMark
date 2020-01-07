@@ -1,0 +1,6 @@
+*.pyc
+include/*.pyc
+dev/
+.vscode/
+
+logs/*/Analysis/

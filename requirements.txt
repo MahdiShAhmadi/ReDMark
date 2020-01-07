@@ -1,0 +1,7 @@
+tensorflow==1.8.0
+opencv-python
+scikit-learn
+matplotlib
+scikit-image
+tqdm
+h5py
