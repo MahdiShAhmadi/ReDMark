@@ -30,9 +30,9 @@ First download pascal dataset from [here](http://host.robots.ox.ac.uk/pascal/VOC
 
 Download the 49 test images from [here](http://decsai.ugr.es/cvg/CG/base.htm) and place them in the folder images/512x512.
 
-To train the networks run the Train.py file. This file creates the network weights according to its settings. The embedding and extraction weights are saved a single .h5 file in the logs folder.
+To train the networks run the `Train.py` file. This file creates the network weights according to its settings. The embedding and extraction weights are saved a single .h5 file in the logs folder.
 
-By running Test.py, they will be split into two separate networks. In this file, the trained networks are tested against various real attacks and their results are saved in logs/{name-of-experiment}/Analysis.
+By running `Test.py`, they will be split into two separate networks. In this file, the trained networks are tested against various real attacks and their results are saved in logs/{name-of-experiment}/Analysis.
  
 ## Dependencies
 
@@ -54,4 +54,5 @@ Please cite our paper [ReDMark: Framework for residual diffusion watermarking ba
   pages={113157},
   year={2019},
   publisher={Elsevier}
-}```
+}
+```

@@ -210,7 +210,7 @@ decoder_model = conv2d_layer(num_of_filters, (2, 2), dilation_rate=1, activation
 decoder_model = layers.Conv2D(1, (1, 1), dilation_rate=1, activation='sigmoid', padding='same', name='dec_output_depth2space')(decoder_model)
 
 # Whole model
-model = tf.keras.models.Model(inputs=[input_img, input_watermark], outputs=[x, decoder_model])
+model = keras.models.Model(inputs=[input_img, input_watermark], outputs=[x, decoder_model])
 model.summary()
 
 # Set weights
@@ -227,8 +227,8 @@ mean_attack = 1/9.0 * np.ones((3,3,1,1))  ################## <LOAD WEIGHTS> ####
 #keras.utils.plot_model(model, to_file='model_general_dct.png')
 
 # Define loss
-sssim_win_size = 8
-loss_object = loss_functions.SSIM_MSE_LOSS(ssim_relative_loss=1.0,mse_relative_loss=0.0,ssim_win_size=sssim_win_size)
+ssim_win_size = 8
+loss_object = loss_functions.SSIM_MSE_LOSS(ssim_relative_loss=1.0,mse_relative_loss=0.0,ssim_win_size=ssim_win_size)
 ssimmse_loss = loss_object.ssimmse_loss
 
 lr = 1e-4

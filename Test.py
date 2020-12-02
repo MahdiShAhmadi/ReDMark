@@ -24,8 +24,7 @@ from PIL import ImageFont
 from PIL import ImageDraw  
 from tqdm import tqdm
 import tensorflow as tf
-keras = tf.keras
-layers = keras.layers
+layers = tf.keras.layers
 from include.my_circular_layer import Conv2D_circular
 import include.various_Functions as vf
 from scipy.ndimage.filters import convolve, median_filter
