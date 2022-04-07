@@ -20,7 +20,10 @@ f_list = [f for f in listdir(pascal_path) if isfile(join(pascal_path, f)) and f.
 # Save
 save_path = './images/pascal'
 if os.path.exists(save_path):
-    os.makedirs(save_path)
+    try:
+        os.makedirs(save_path)
+    except FileExistsError:
+        pass
 
 all_patches = []
 c = 0
@@ -35,7 +38,7 @@ for f in tqdm(f_list):
 
 concat_patches = np.concatenate(all_patches, axis=0)
 print('Saving mat file...')
-sio.savemat('./images/pascal_patches.mat', {'patches': concat_patches})
+sio.savemat('./images/pascal/pascal_patches.mat', {'patches': concat_patches})
 print('[!] First Mat file is ready.')
 
 x_train = sio.loadmat('./images/pascal/pascal_patches.mat')['patches']
