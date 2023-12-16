@@ -26,13 +26,19 @@ To share the watermark data between more image regions, we developed the novel c
 
 ## How to use
 
-First download pascal dataset from [here](http://host.robots.ox.ac.uk/pascal/VOC/voc2012/) and place the extracted `JPEGImages` folder in images/pascal folder. Then run the file prepare_pascal.py. 
+First download pascal dataset from [here](http://host.robots.ox.ac.uk/pascal/VOC/voc2012/VOCtrainval_11-May-2012.tar) and place the extracted `JPEGImages` folder in images/pascal folder. Then run the file prepare_pascal.py.
+```
+wget http://host.robots.ox.ac.uk/pascal/VOC/voc2012/VOCtrainval_11-May-2012.tar
+tar xf images/pascal/VOCtrainval_11-May-2012.tar
+mv images/pascal/VOCtrainval_11-May-2012.tar .
+```
+
 
 Download the 49 test images from [here](http://decsai.ugr.es/cvg/CG/base.htm) and place them in the folder images/512x512.
 
-To train the networks run the `Train.py` file. This file creates the network weights according to its settings. The embedding and extraction weights are saved a single .h5 file in the logs folder.
+To train the networks run the `train.py` file. This file creates the network weights according to its settings. The embedding and extraction weights are saved a single .h5 file in the logs folder.
 
-By running `Test.py`, they will be split into two separate networks. In this file, the trained networks are tested against various real attacks and their results are saved in logs/{name-of-experiment}/Analysis.
+By running `test.py`, they will be split into two separate networks. In this file, the trained networks are tested against various real attacks and their results are saved in logs/{name-of-experiment}/Analysis.
  
 ## Dependencies
 

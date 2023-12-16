@@ -1,6 +1,8 @@
 *.pyc
 include/*.pyc
 dev/
+*.tar
+VOCdevkit
 .vscode/
-
+setup.sh
 logs/*/Analysis/
