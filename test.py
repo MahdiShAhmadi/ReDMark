@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Jul 30 16:18:20 2018
-
-@author: Test
+Modified at Dec 16 2023
 """
 
 import os

@@ -17,10 +17,10 @@ To share the watermark data between more image regions, we developed the novel c
 
 ## Notes
 
-    1- The watermark data is fully random, i.e. is a random binary vector.
-    2- In every training iteration, the random watermark and cover images are changed.
-    3- Some attacks are not differentiable and cannot be implemented exactly as they are. In this cases we used their approximations. The experiments showed us that the resulting networks are robust to not only the real attack but also to a wider family of attacks.
-    4- The embedding network's structure is residual. This means that the watermark data is embedded into the residual part of the pipeline and then added to the original image. This helps the transparency of the watermarked images. 
+1. The watermark data is fully random, i.e. is a random binary vector.
+2. In every training iteration, the random watermark and cover images are changed.
+3. Some attacks are not differentiable and cannot be implemented exactly as they are. In this cases we used their approximations. The experiments showed us that the resulting networks are robust to not only the real attack but also to a wider family of attacks.
+4. The embedding network's structure is residual. This means that the watermark data is embedded into the residual part of the pipeline and then added to the original image. This helps the transparency of the watermarked images. 
 
 ![Im3](images/MD/Embedding.png "Embedding")
 

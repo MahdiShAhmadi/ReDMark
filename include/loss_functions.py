@@ -1,17 +1,15 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sun Jul 15 17:20:02 2018
+Updated at Dec 16 2023
 
-@author: Alireza
+@author: Alireza Norouzi
 source : https://github.com/keras-team/keras-contrib/blob/master/keras_contrib/losses/dssim.py
 """
 
 from __future__ import absolute_import
-#from keras.objectives import *
 import tensorflow as tf
 import numpy as np
 keras = tf.keras
-K = keras.backend
 
 class SSIM_MSE_LOSS():
 	def __init__(self, ssim_relative_loss, mse_relative_loss, ssim_win_size=4):
