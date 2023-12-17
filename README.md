@@ -1,9 +1,11 @@
 ReDMark
 ========
 
+Update (Dec 17 2023): Migrated the code to tensorflow 2
+
 ## What is ReDMark
 
-![Im1](images/MD/overal.png "overal")
+![Im1](images/MD/overall.png "overal")
 
 ReDMark is a watermarking framework that uses Convolutional Neural Networks (CNNs) in watermark embedding and extraction. Both embedding and extraction networks are trained together in an end-to-end pipeline; Therefore, the trained embedding and extraction networks interact better in the real situations. 
 
@@ -30,11 +32,15 @@ First download pascal dataset from [here](http://host.robots.ox.ac.uk/pascal/VOC
 ```
 wget http://host.robots.ox.ac.uk/pascal/VOC/voc2012/VOCtrainval_11-May-2012.tar
 tar xf images/pascal/VOCtrainval_11-May-2012.tar
-mv images/pascal/VOCtrainval_11-May-2012.tar .
+mv VOCdevkit/VOC2012/JPEGImages/ images/pascal/
 ```
 
 
 Download the 49 test images from [here](http://decsai.ugr.es/cvg/CG/base.htm) and place them in the folder images/512x512.
+```
+wget https://ccia.ugr.es/cvg/CG/images/base/{1..49}.gif -P images/512x512
+```
+
 
 To train the networks run the `train.py` file. This file creates the network weights according to its settings. The embedding and extraction weights are saved a single .h5 file in the logs folder.
 

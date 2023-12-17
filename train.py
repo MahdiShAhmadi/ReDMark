@@ -20,7 +20,6 @@ keras = tf.keras
 layers = keras.layers
 K = keras.backend
 
-tf.config.experimental.set_visible_devices([], "GPU")
 
 def multiply_255(x):
     return x*255.0   
@@ -172,10 +171,10 @@ salt_pepper_attacked = layers.Lambda(salt_pepper_noise, arguments={'salt_ratio':
 
 #####################  Jpeg_attake   ############################
 jpeg_attaked = dct_layer(encoder_model)
-jpeg_attaked = layers.Lambda(lambda x: (x*255) / q_mtx ,output_shape=scalar_output_shape , name='jpg1')(jpeg_attaked)
+jpeg_attaked = layers.Lambda(lambda x: (x*255) / q_mtx, output_shape=scalar_output_shape, name='jpg1')(jpeg_attaked)
 #jpeg_attaked = layers.Lambda(keras.backend.round)(jpeg_attaked)
 jpeg_attaked = layers.Lambda(UniformNoise, arguments={'val':jpeg_noise})(jpeg_attaked)
-jpeg_attaked = layers.Lambda(lambda x: (x/255) * q_mtx ,output_shape=scalar_output_shape , name='jpg2')(jpeg_attaked)
+jpeg_attaked = layers.Lambda(lambda x: (x/255) * q_mtx, output_shape=scalar_output_shape, name='jpg2')(jpeg_attaked)
 jpeg_attaked = idct_layer(jpeg_attaked)
 
 #####################    smoothing_attak  #######################
@@ -252,9 +251,9 @@ tf_logger = tf.summary.create_file_writer(log_dir)
 
 
 batch_size = 32
-epochs = 1#00
+epochs = 100
 offset = 0 # To be able to continue training
-steps = 100#00 #int(np.ceil(60000 / batch_size))
+steps = 10000 #int(np.ceil(60000 / batch_size))
 
 for e in range(epochs):
     print('Epochs {}...'.format(e+1))
@@ -298,8 +297,9 @@ for e in range(epochs):
             plt.imshow(W_decoder, cmap='gray')
             plt.title('Extracted W')
             
-            plt.show()
+            plt.show(block=False)
             plt.pause(1)
+            plt.close()
             
     mean_error_w = np.mean(loss_w)
     mean_error_I = np.mean(loss_I)
