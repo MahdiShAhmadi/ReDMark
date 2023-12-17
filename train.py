@@ -13,13 +13,14 @@ import matplotlib.pyplot as plt
 import scipy.io as sio
 from tqdm import tqdm
 import os
-from include.tensorboard_logging import Logger
 from include import loss_functions
 from include.my_circular_layer import Conv2D_circular
 
 keras = tf.keras
 layers = keras.layers
 K = keras.backend
+
+tf.config.experimental.set_visible_devices([], "GPU")
 
 def multiply_255(x):
     return x*255.0   
@@ -247,12 +248,13 @@ if os.path.exists('./logs/{}'.format(exp_id)) == False:
     os.mkdir('./logs/{}/Weights'.format(exp_id))
     
 log_dir = './logs/{}'.format(exp_id)
-tf_logger = Logger(log_dir)
+tf_logger = tf.summary.create_file_writer(log_dir)
+
 
 batch_size = 32
-epochs = 100
-offset = 0 # for sometime with power outage
-steps = 10000 #int(np.ceil(60000 / batch_size))
+epochs = 1#00
+offset = 0 # To be able to continue training
+steps = 100#00 #int(np.ceil(60000 / batch_size))
 
 for e in range(epochs):
     print('Epochs {}...'.format(e+1))
@@ -282,7 +284,7 @@ for e in range(epochs):
             
             plt.subplot(221)
             plt.imshow(I[0,:,:,0], cmap='gray')
-            plt.title('Container[I]')
+            plt.title('CoverImage[I]')
             
             plt.subplot(222)
             plt.imshow(W[0,:,:,0], cmap='gray')
@@ -304,9 +306,10 @@ for e in range(epochs):
     psnr = 10*np.log10(1**2/mean_error_I)
     print('\tI Error = {} And W Error = {}'.format(mean_error_I, mean_error_w))
     print('PSNR is: ' ,psnr)
-    tf_logger.log_scalar('W_MSE', mean_error_w, e+1)
-    tf_logger.log_scalar('I_MSE', mean_error_I, e+1)
-    tf_logger.log_scalar('PSNR', psnr, e+1)
+    with tf_logger.as_default():
+        tf.summary.scalar('W_MSE', mean_error_w, e+1)
+        tf.summary.scalar('I_MSE', mean_error_I, e+1)
+        tf.summary.scalar('PSNR', psnr, e+1)
     
     if (e+1) % 10 == 0:
         model.save_weights('./logs/{}/Weights/weights_{}.h5'.format(exp_id, e+1+offset))
