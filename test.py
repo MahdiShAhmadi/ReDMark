@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Jul 30 16:18:20 2018
-
-@author: Test
+Modified at Dec 16 2023
 """
 
 import os
@@ -10,23 +8,20 @@ import time
 from os import listdir
 from os.path import isfile, join
 import numpy as np
-import matplotlib
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
 import scipy.io as sio
 import cv2
-import skimage.transform as imgTrans
-from skimage.measure import compare_ssim, compare_psnr
+from skimage.metrics import peak_signal_noise_ratio
+from skimage.metrics import structural_similarity
 import PIL
-from PIL import Image
-from PIL import ImageFont
-from PIL import ImageDraw  
+from PIL import Image, ImageFont, ImageDraw
 from tqdm import tqdm
 import tensorflow as tf
 layers = tf.keras.layers
 from include.my_circular_layer import Conv2D_circular
-import include.various_Functions as vf
+import include.utils as vf
 from scipy.ndimage.filters import convolve, median_filter
 from scipy.ndimage.filters import gaussian_filter
 
@@ -38,8 +33,11 @@ def multiply_255(x):
 def divide_255(x):
     return x/255.0  
 
+def scalar_output_shape(input_shape):
+    return input_shape
+
 def multiply_scalar(x, scalar):
-    return x * scalar #tf.convert_to_tensor(scalar, tf.float32)
+    return x * tf.convert_to_tensor(scalar, tf.float32)
 
 def buildModel(model_path, patch_rows=32, patch_cols=32, channels=1, block_size=8, use_circular=True):
     
@@ -53,8 +51,7 @@ def buildModel(model_path, patch_rows=32, patch_cols=32, channels=1, block_size=
     input_watermark = layers.Input(shape=(w_rows, w_cols, 1), name='input_watermark')
     
     # Rearrange input 
-    rearranged_img = l1 = layers.Lambda(tf.space_to_depth, arguments={'block_size':block_size}, name='rearrange_img')(input_img)
-    
+    rearranged_img = l1 = layers.Lambda(tf.nn.space_to_depth, arguments={'block_size':block_size}, name='rearrange_img')(input_img)
     
     dct_layer = layers.Conv2D(64, (1, 1), activation='linear', padding='same', use_bias=False, trainable=False, name='dct1')
     dct_layer2 = layers.Conv2D(64, (1, 1), activation='linear', padding='same', use_bias=False, trainable=False, name='dct2')
@@ -73,16 +70,17 @@ def buildModel(model_path, patch_rows=32, patch_cols=32, channels=1, block_size=
     encoder_model = idct_layer(encoder_model)
     
     # Strength
-    encoder_model = layers.Lambda(multiply_scalar, arguments={'scalar':input_strenght_alpha}, name='strenght_factor')(encoder_model)
+    encoder_model = tf.math.multiply(encoder_model, input_strenght_alpha, name="strenght_factor")
+    # encoder_model = layers.Lambda(multiply_scalar, arguments={'scalar':input_strenght_alpha}, output_shape=scalar_output_shape, name='strenght_factor')(encoder_model)
     
     encoder_model = layers.Add(name='residual_add')([encoder_model, l1])
-    encoder_model = x = layers.Lambda(tf.depth_to_space, arguments={'block_size':block_size}, name='enc_output_depth2space')(encoder_model)
+    encoder_model = x = layers.Lambda(tf.nn.depth_to_space, arguments={'block_size':block_size}, name='enc_output_depth2space')(encoder_model)
     
     # Attack (The attacks occure in test phase)
     
     # Watermark decoder
     input_attacked_img = layers.Input(shape=(patch_rows, patch_cols, 1), name='input_attacked_img')
-    decoder_model = layers.Lambda(tf.space_to_depth, arguments={'block_size':block_size}, name='dec_input_space2depth')(input_attacked_img)
+    decoder_model = layers.Lambda(tf.nn.space_to_depth, arguments={'block_size':block_size}, name='dec_input_space2depth')(input_attacked_img)
     decoder_model = dct_layer2(decoder_model)
     decoder_model = layers.Conv2D(64, (1, 1), dilation_rate=1, activation='elu', padding='same', name='dec_conv1')(decoder_model)
     decoder_model = conv2d_layer(64, (2, 2), dilation_rate=1, activation='elu', padding='same', name='dec_conv2')(decoder_model)
@@ -370,7 +368,7 @@ for test_img in test_imgs_files:
             Im_32x32_patchs = vf.partitioning(Im_normalized, p_size=patch_rows)
             W = np.random.randint(low=0, high=2, size=(num_batch, w_rows, w_cols, 1)).astype(np.float32)
             # Apply embedding network
-            Iw_batch = embedding_net.predict_on_batch([Im_32x32_patchs, W, np.array([alpha])])
+            Iw_batch = embedding_net.predict_on_batch([Im_32x32_patchs, W, alpha*np.ones_like(W)])
             # reconstruct Iw
             Iw = vf.tiling(Iw_batch, rec_size=img_rows)
             Iw *= std_normalize
@@ -380,10 +378,10 @@ for test_img in test_imgs_files:
             Iw = np.uint8(Iw.squeeze())
             # PSNR
             #psnr = 10*np.log10(255**2/np.mean((im_gray - Iw)**2))
-            psnr = compare_psnr(im_gray, Iw, data_range=255)
+            psnr = peak_signal_noise_ratio(im_gray, Iw, data_range=255)
             tmp_psnr.append(psnr)
             # SSIM
-            tmp_ssim.append(compare_ssim(im_gray, Iw, win_size=9, data_range=255))
+            tmp_ssim.append(structural_similarity(im_gray, Iw, win_size=9, data_range=255))
             
             # Save sample image
             if n == 0 and save_samples == True:
@@ -455,7 +453,7 @@ for attack in attacks_list: # for all attacks
                     W_robust = np.reshape(W_robust, [-1, w_rows, w_cols, 1])
 
                     # Apply embedding network
-                    Iw_batch = embedding_net.predict_on_batch([Im_32x32_patchs, W_robust, np.array([alpha])])
+                    Iw_batch = embedding_net.predict_on_batch([Im_32x32_patchs, W_robust, alpha*np.ones_like(W_robust)])
 
                     # reconstruct Iw
                     Iw = vf.tiling(Iw_batch, rec_size=img_rows)
@@ -586,10 +584,10 @@ for i, attack in enumerate(attacks_list):
 Im = np.ones((256,256)) * 0.5
 Im_32x32_patchs = vf.partitioning(Im, p_size=32)
 W = np.zeros((64,4,4,1))
-Iw_batch = embedding_net.predict_on_batch([Im_32x32_patchs, W, np.array([1.0])])
+Iw_batch = embedding_net.predict_on_batch([Im_32x32_patchs, W, np.ones_like(W)])
 Iw_zeros = vf.tiling(Iw_batch ,256)
 W[:,1,1,:] = 1
-Iw_batch = embedding_net.predict_on_batch([Im_32x32_patchs, W, np.array([1.0])])
+Iw_batch = embedding_net.predict_on_batch([Im_32x32_patchs, W, np.ones_like(W)])
 Iw_impulse = vf.tiling(Iw_batch ,256)
 Impulse_responce = Iw_impulse-Iw_zeros
 

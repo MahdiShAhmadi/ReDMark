@@ -13,13 +13,13 @@ import matplotlib.pyplot as plt
 import scipy.io as sio
 from tqdm import tqdm
 import os
-from include.tensorboard_logging import Logger
 from include import loss_functions
 from include.my_circular_layer import Conv2D_circular
 
 keras = tf.keras
 layers = keras.layers
 K = keras.backend
+
 
 def multiply_255(x):
     return x*255.0   
@@ -34,7 +34,7 @@ def multiply_scalar(x, scalar):
     return x * tf.convert_to_tensor(scalar, tf.float32)
 
 def dropout_blocks(x):
-    noise = tf.random_uniform(shape=[1,4,4,1],maxval=1,dtype=tf.float32,seed=None)
+    noise = tf.random.uniform(shape=[1,4,4,1],maxval=1,dtype=tf.float32,seed=None)
     noise = noise > 0.25
     noise = tf.cast(noise, tf.float32)
 #    noise = tf.convert_to_tensor(noise, dtype='float32')
@@ -42,10 +42,10 @@ def dropout_blocks(x):
 
 def salt_pepper_noise(x, salt_ratio):
     # Thanks to https://tyfkda.github.io/blog/2016/09/22/tensorflow-salt-pepper.html
-    random_image = tf.random_uniform(shape=[1,4,4,64],minval=0.0, maxval=1,dtype=tf.float32,seed=None)
+    random_image = tf.random.uniform(shape=[1,4,4,64],minval=0.0, maxval=1,dtype=tf.float32,seed=None)
     
-    salt_image = tf.to_float(tf.greater_equal(random_image, 1.0 - salt_ratio)) - 0.5
-    pepper_image = tf.to_float(tf.greater_equal(random_image, salt_ratio)) - 0.5
+    salt_image = tf.cast(tf.greater_equal(random_image, 1.0 - salt_ratio), tf.float32) - 0.5
+    pepper_image = tf.cast(tf.greater_equal(random_image, salt_ratio), tf.float32) - 0.5
     
     noised_image = tf.minimum(tf.maximum(x, salt_image), pepper_image)
     return noised_image
@@ -59,8 +59,8 @@ def random_switch(x, prob):
     x1 = x[1]
     x2 = x[2]
     x3 = x[3]
-    noise_A = tf.random_uniform(shape=[1],maxval=1,dtype=tf.float32,seed=None)
-    noise_B = tf.random_uniform(shape=[1],maxval=1,dtype=tf.float32,seed=None)
+    noise_A = tf.random.uniform(shape=[1],maxval=1,dtype=tf.float32,seed=None)
+    noise_B = tf.random.uniform(shape=[1],maxval=1,dtype=tf.float32,seed=None)
     noise0 = noise_A >= 0.5
     noise0 = tf.cast(noise0, tf.float32)
     noise1 = noise_A < 0.5
@@ -72,11 +72,11 @@ def random_switch(x, prob):
     return noise2*(x0*noise0 + x1*noise1) + noise3*(x2*noise0 + x3*noise1)
 
 def UniformNoise(x, val):
-    noise = tf.random_uniform(shape=[32,4,4,64],minval=-val,maxval=val,dtype=tf.float32,seed=None)
+    noise = tf.random.uniform(shape=[32,4,4,64],minval=-val,maxval=val,dtype=tf.float32,seed=None)
     return x + noise
     
 
-Q = 70;
+Q = 70
 jpeg_noise = 0.55
 q_mtx = sio.loadmat('./transforms/jpeg_qm.mat')['qm']
 q_mtx = q_mtx.astype('float32')
@@ -136,7 +136,7 @@ w_cols = int((img_cols) / block_size)
 input_watermark = layers.Input(shape=(w_rows, w_cols, 1), name='input_watermark')
 
 # Rearrange input 
-rearranged_img = l1 = layers.Lambda(tf.space_to_depth, arguments={'block_size':block_size}, name='rearrange_img')(input_img)
+rearranged_img = l1 = layers.Lambda(tf.nn.space_to_depth, arguments={'block_size':block_size}, name='rearrange_img')(input_img)
 trainable_transform = False 
 num_of_filters = block_size**2  
 dct_layer = layers.Conv2D(num_of_filters, (1, 1), activation='linear', padding='same', use_bias=False, trainable=trainable_transform, name='dct')
@@ -155,7 +155,7 @@ encoder_model = conv2d_layer(num_of_filters, (2, 2), dilation_rate=1, activation
 encoder_model = idct_layer(encoder_model)
 encoder_model = layers.Add(name='residual_add')([encoder_model, l1])
 
-x = layers.Lambda(tf.depth_to_space, arguments={'block_size':block_size}, name='enc_output_depth2space')(encoder_model)
+x = layers.Lambda(tf.nn.depth_to_space, arguments={'block_size':block_size}, name='enc_output_depth2space')(encoder_model)
 
 ##################### Noise Attack  #############################
 noise_std = 3.0
@@ -171,16 +171,16 @@ salt_pepper_attacked = layers.Lambda(salt_pepper_noise, arguments={'salt_ratio':
 
 #####################  Jpeg_attake   ############################
 jpeg_attaked = dct_layer(encoder_model)
-jpeg_attaked = layers.Lambda(lambda x: (x*255) / q_mtx ,output_shape=scalar_output_shape , name='jpg1')(jpeg_attaked)
+jpeg_attaked = layers.Lambda(lambda x: (x*255) / q_mtx, output_shape=scalar_output_shape, name='jpg1')(jpeg_attaked)
 #jpeg_attaked = layers.Lambda(keras.backend.round)(jpeg_attaked)
 jpeg_attaked = layers.Lambda(UniformNoise, arguments={'val':jpeg_noise})(jpeg_attaked)
-jpeg_attaked = layers.Lambda(lambda x: (x/255) * q_mtx ,output_shape=scalar_output_shape , name='jpg2')(jpeg_attaked)
+jpeg_attaked = layers.Lambda(lambda x: (x/255) * q_mtx, output_shape=scalar_output_shape, name='jpg2')(jpeg_attaked)
 jpeg_attaked = idct_layer(jpeg_attaked)
 
 #####################    smoothing_attak  #######################
 smoothing_layer = layers.Conv2D(1, (3, 3), dilation_rate=1, padding='same', name='smoothing_attak',use_bias=False, trainable=False)
 mean_attacked = smoothing_layer(x)
-mean_attacked = layers.Lambda(tf.space_to_depth, arguments={'block_size':block_size}, name='mean_attack_space2depth')(mean_attacked)
+mean_attacked = layers.Lambda(tf.nn.space_to_depth, arguments={'block_size':block_size}, name='mean_attack_space2depth')(mean_attacked)
 
 #####################    sharpenning(edge)_attak  #######################
 mean = smoothing_layer(x)
@@ -188,7 +188,7 @@ mean = layers.Lambda(multiply_scalar, arguments={'scalar':-1.0})(mean)
 x2 = layers.Lambda(multiply_scalar, arguments={'scalar':1.0})(x)
 
 sharpenning_attacked = layers.Add(name='sharpenning_subtract')([x2, mean])
-sharpenning_attacked = layers.Lambda(tf.space_to_depth, arguments={'block_size':block_size}, name='sharpening_attack_space2depth')(sharpenning_attacked)
+sharpenning_attacked = layers.Lambda(tf.nn.space_to_depth, arguments={'block_size':block_size}, name='sharpening_attack_space2depth')(sharpenning_attacked)
 
 #################   Random selection of attacks  #################
 identity_layer = encoder_model
@@ -247,11 +247,12 @@ if os.path.exists('./logs/{}'.format(exp_id)) == False:
     os.mkdir('./logs/{}/Weights'.format(exp_id))
     
 log_dir = './logs/{}'.format(exp_id)
-tf_logger = Logger(log_dir)
+tf_logger = tf.summary.create_file_writer(log_dir)
+
 
 batch_size = 32
 epochs = 100
-offset = 0 # for sometime with power outage
+offset = 0 # To be able to continue training
 steps = 10000 #int(np.ceil(60000 / batch_size))
 
 for e in range(epochs):
@@ -282,7 +283,7 @@ for e in range(epochs):
             
             plt.subplot(221)
             plt.imshow(I[0,:,:,0], cmap='gray')
-            plt.title('Container[I]')
+            plt.title('CoverImage[I]')
             
             plt.subplot(222)
             plt.imshow(W[0,:,:,0], cmap='gray')
@@ -296,17 +297,19 @@ for e in range(epochs):
             plt.imshow(W_decoder, cmap='gray')
             plt.title('Extracted W')
             
-            plt.show()
+            plt.show(block=False)
             plt.pause(1)
+            plt.close()
             
     mean_error_w = np.mean(loss_w)
     mean_error_I = np.mean(loss_I)
     psnr = 10*np.log10(1**2/mean_error_I)
     print('\tI Error = {} And W Error = {}'.format(mean_error_I, mean_error_w))
     print('PSNR is: ' ,psnr)
-    tf_logger.log_scalar('W_MSE', mean_error_w, e+1)
-    tf_logger.log_scalar('I_MSE', mean_error_I, e+1)
-    tf_logger.log_scalar('PSNR', psnr, e+1)
+    with tf_logger.as_default():
+        tf.summary.scalar('W_MSE', mean_error_w, e+1)
+        tf.summary.scalar('I_MSE', mean_error_I, e+1)
+        tf.summary.scalar('PSNR', psnr, e+1)
     
     if (e+1) % 10 == 0:
         model.save_weights('./logs/{}/Weights/weights_{}.h5'.format(exp_id, e+1+offset))

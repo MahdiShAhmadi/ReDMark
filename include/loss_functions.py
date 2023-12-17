@@ -1,17 +1,14 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sun Jul 15 17:20:02 2018
+Updated at Dec 16 2023
 
-@author: Alireza
+@author: Alireza Norouzi
 source : https://github.com/keras-team/keras-contrib/blob/master/keras_contrib/losses/dssim.py
 """
 
-from __future__ import absolute_import
-#from keras.objectives import *
 import tensorflow as tf
 import numpy as np
-keras = tf.keras
-K = keras.backend
+
 
 class SSIM_MSE_LOSS():
 	def __init__(self, ssim_relative_loss, mse_relative_loss, ssim_win_size=4):
@@ -31,13 +28,13 @@ class SSIM_MSE_LOSS():
 		C1 = (K1*L)**2
 		C2 = (K2*L)**2
 		mu1 = tf.nn.conv2d(img1, window, strides=[1,1,1,1], padding='VALID')
-		mu2 = tf.nn.conv2d(img2, window, strides=[1,1,1,1],padding='VALID')
+		mu2 = tf.nn.conv2d(img2, window, strides=[1,1,1,1], padding='VALID')
 		mu1_sq = mu1*mu1
 		mu2_sq = mu2*mu2
 		mu1_mu2 = mu1*mu2
-		sigma1_sq = tf.nn.conv2d(img1*img1, window, strides=[1,1,1,1],padding='VALID') - mu1_sq
-		sigma2_sq = tf.nn.conv2d(img2*img2, window, strides=[1,1,1,1],padding='VALID') - mu2_sq
-		sigma12 = tf.nn.conv2d(img1*img2, window, strides=[1,1,1,1],padding='VALID') - mu1_mu2
+		sigma1_sq = tf.nn.conv2d(img1*img1, window, strides=[1,1,1,1], padding='VALID') - mu1_sq
+		sigma2_sq = tf.nn.conv2d(img2*img2, window, strides=[1,1,1,1], padding='VALID') - mu2_sq
+		sigma12 = tf.nn.conv2d(img1*img2, window, strides=[1,1,1,1], padding='VALID') - mu1_mu2
 		if cs_map:
 			value = (((2*mu1_mu2 + C1)*(2*sigma12 + C2))/((mu1_sq + mu2_sq + C1)*
 						(sigma1_sq + sigma2_sq + C2)),
