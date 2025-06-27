@@ -1,7 +1,7 @@
 ReDMark
 ========
 
-Update (Dec 17 2023): Migrated the code to tensorflow 2
+Update (Dec 17 2023): Migrated the code to tensorflow 2.15
 
 ## What is ReDMark
 
@@ -31,7 +31,7 @@ To share the watermark data between more image regions, we developed the novel c
 First download pascal dataset from [here](http://host.robots.ox.ac.uk/pascal/VOC/voc2012/VOCtrainval_11-May-2012.tar) and place the extracted `JPEGImages` folder in images/pascal folder. Then run the file prepare_pascal.py.
 ```
 wget http://host.robots.ox.ac.uk/pascal/VOC/voc2012/VOCtrainval_11-May-2012.tar
-tar xf images/pascal/VOCtrainval_11-May-2012.tar
+tar xf VOCtrainval_11-May-2012.tar
 mv VOCdevkit/VOC2012/JPEGImages/ images/pascal/
 ```
 
@@ -42,7 +42,7 @@ wget https://ccia.ugr.es/cvg/CG/images/base/{1..49}.gif -P images/512x512
 ```
 
 
-To train the networks run the `train.py` file. This file creates the network weights according to its settings. The embedding and extraction weights are saved a single .h5 file in the logs folder.
+To train the networks run the `train.py` file. This file creates the network weights according to its settings. The embedding and extraction weights are saved as a single .h5 file in the logs folder.
 
 By running `test.py`, they will be split into two separate networks. In this file, the trained networks are tested against various real attacks and their results are saved in logs/{name-of-experiment}/Analysis.
  
